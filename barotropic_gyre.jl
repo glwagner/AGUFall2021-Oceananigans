@@ -1,4 +1,4 @@
-using Oceananigans
+using Oceananigans, Oceananigans.Units
 
 # Grid
 Nx = Ny = 60
@@ -11,11 +11,11 @@ grid = RectilinearGrid(size = (Nx, Ny),
 
 # Coriolis and viscosity
 coriolis = BetaPlane(f₀=1e-4, β=1e-11)
-closure = IsotropicViscosity(ν=4e2)
+closure = IsotropicDiffusivity(ν=4e2)
 
 # Top boundary condition
 wind_stress(x, y, t) = -1e-4 * cos(π * x / 600kilometers)
-u_bcs = FieldBoundaryConditions(top=FluxBoundaryConditions(wind_stress))
+u_bcs = FieldBoundaryConditions(top=FluxBoundaryCondition(wind_stress))
 
 # Model
 model = NonhydrostaticModel(; grid, coriolis, closure,
