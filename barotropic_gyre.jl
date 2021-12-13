@@ -1,27 +1,38 @@
-using Oceananigans, Oceananigans.Units
+using Oceananigans, Oceananigans.Units, GLMakie
 
-# Grid
+# Specify domain and mesh / grid
 Nx = Ny = 60
 Lx = Ly = 1200kilometers
+Lz = 5000
 
-grid = RectilinearGrid(size = (Nx, Ny),
-                       x = (-Lx/2, Ly/2),
-                       y = (-Ly/2, Ly/2),
-                       topology = (Bounded, Bounded, Flat))
+grid = RectilinearGrid(size = (Nx, Ny, 1),
+                       x = (0, Lx),
+                       y = (0, Ly),
+                       z = (-Lz, 0),
+                       halo = (3, 3, 3),
+                       topology = (Bounded, Bounded, Bounded))
 
-# Coriolis and viscosity
+# Specify coriolis, viscosity / turbulence closure, and boundary condition
 coriolis = BetaPlane(f₀=1e-4, β=1e-11)
-closure = IsotropicDiffusivity(ν=4e2)
+closure = IsotropicDiffusivity(ν=400)
 
-# Top boundary condition
-wind_stress(x, y, t) = -1e-4 * cos(π * x / 600kilometers)
-u_bcs = FieldBoundaryConditions(top=FluxBoundaryCondition(wind_stress))
+no_slip = ValueBoundaryCondition(0)
+wind_stress(x, y, t) = - 1e-4 * cos(π * x / 600kilometers)
+u_bcs = FieldBoundaryConditions(; top=FluxBoundaryCondition(wind_stress), south=no_slip, north=no_slip)
+v_bcs = FieldBoundaryConditions(; east=no_slip, west=no_slip)
 
-# Model
-model = NonhydrostaticModel(; grid, coriolis, closure,
-                            boundary_conditions = (; u=u_bcs))
-                           
-simulation = Simulation(model, Δt = 3600, stop_time = 1years)
+model = HydrostaticFreeSurfaceModel(; grid, coriolis, closure,
+                                      momentum_advection = UpwindBiasedFifthOrder(),
+                                      boundary_conditions = (; u=u_bcs, v=v_bcs))
+                          
+# Time-stepping
+simulation = Simulation(model, Δt=20minutes, stop_time=3years)
+
+progress(sim) = @info "Iter: $(iteration(sim)), time: $(prettytime(sim))"
+simulation.callbacks[:progress] = Callback(progress, IterationInterval(100))
 
 run!(simulation)
 
+# Visualize the x-velocity field
+fig, ax, pl = heatmap(interior(model.velocities.u)[:, :, 1])
+display(fig)
