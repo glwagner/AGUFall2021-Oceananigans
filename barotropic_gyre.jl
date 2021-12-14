@@ -1,14 +1,10 @@
 using Oceananigans, Oceananigans.Units, GLMakie
 
 # Specify domain and mesh / grid
-Nx = Ny = 60
-Lx = Ly = 1200kilometers
-Lz = 5000
-
-grid = RectilinearGrid(size = (Nx, Ny, 1),
-                       x = (0, Lx),
-                       y = (0, Ly),
-                       z = (-Lz, 0),
+grid = RectilinearGrid(size = (60, 60, 1),
+                       x = (0, 1200kilometers),
+                       y = (0, 1200kilometers),
+                       z = (-5000, 0),
                        halo = (3, 3, 3),
                        topology = (Bounded, Bounded, Bounded))
 
@@ -16,14 +12,12 @@ grid = RectilinearGrid(size = (Nx, Ny, 1),
 coriolis = BetaPlane(f₀=1e-4, β=1e-11)
 closure = IsotropicDiffusivity(ν=400)
 
-no_slip = ValueBoundaryCondition(0)
 wind_stress(x, y, t) = - 1e-4 * cos(π * x / 600kilometers)
-u_bcs = FieldBoundaryConditions(; top=FluxBoundaryCondition(wind_stress), south=no_slip, north=no_slip)
-v_bcs = FieldBoundaryConditions(; east=no_slip, west=no_slip)
+u_bcs = FieldBoundaryConditions(; top=FluxBoundaryCondition(wind_stress))
 
 model = HydrostaticFreeSurfaceModel(; grid, coriolis, closure,
                                       momentum_advection = UpwindBiasedFifthOrder(),
-                                      boundary_conditions = (; u=u_bcs, v=v_bcs))
+                                      boundary_conditions = (; u=u_bcs))
                           
 # Time-stepping
 simulation = Simulation(model, Δt=20minutes, stop_time=3years)
