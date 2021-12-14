@@ -7,7 +7,8 @@ grid = RectilinearGrid(GPU(), size = (256, 256, 256), halo = (3, 3, 3),
 # Specify coriolis, viscosity / turbulence closure, and boundary condition
 coriolis = FPlane(f=1e-4)
 closure = AnisotropicMinimumDissipation()
-boundary_conditions = (; b = FieldBoundaryConditions(top=FluxBoundaryCondition(1e-8)))
+b_bcs = FieldBoundaryConditions(top=FluxBoundaryCondition(1e-8))
+boundary_conditions = (; b=b_bcs)
 
 model = NonhydrostaticModel(; grid, coriolis, closure, boundary_conditions,
                               advection = WENO5(), tracers = :b,
@@ -18,8 +19,10 @@ set!(model, b = (x, y, z) -> 1e-6 * z, w = (x, y, z) -> 1e-4 * randn())
 # Time-stepping
 simulation = Simulation(model, Δt=10, stop_time=12hours)
 
-progress(sim) = @info "Iter: $(iteration(sim)), time: $(prettytime(sim)), " *
-                      "Δt: $(prettytime(sim.Δt)), wall time: $(prettytime(sim.run_wall_time))"
+progress(sim) = @info "Iter: $(iteration(sim)), " *
+                      "time: $(prettytime(sim)), " *
+                      "Δt: $(prettytime(sim.Δt)), " *
+                      "wall time: $(prettytime(sim.run_wall_time))"
 simulation.callbacks[:progress] = Callback(progress, IterationInterval(100))
 
 wizard = TimeStepWizard(cfl=0.2, max_change=1.1)
