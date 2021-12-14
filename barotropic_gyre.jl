@@ -22,11 +22,11 @@ model = HydrostaticFreeSurfaceModel(; grid, coriolis, closure,
 # Time-stepping
 simulation = Simulation(model, Δt=20minutes, stop_time=3years)
 
-progress(sim) = @info "Iter: $(iteration(sim)), time: $(prettytime(sim))"
-simulation.callbacks[:progress] = Callback(progress, IterationInterval(100))
-
 run!(simulation)
 
-# Visualize the x-velocity field
 fig, ax, pl = heatmap(interior(model.velocities.u)[:, :, 1])
+
 display(fig)
+
+progress(sim) = @info "Iter: $(iteration(sim)), time: $(prettytime(sim))"
+simulation.callbacks[:progress] = Callback(progress, IterationInterval(100))
