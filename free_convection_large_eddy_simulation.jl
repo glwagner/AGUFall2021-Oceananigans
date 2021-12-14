@@ -17,7 +17,7 @@ model = NonhydrostaticModel(; grid, coriolis, closure, boundary_conditions,
 set!(model, b = (x, y, z) -> 1e-6 * z, w = (x, y, z) -> 1e-4 * randn())
                           
 # Time-stepping
-simulation = Simulation(model, Δt=10, stop_time=12hours)
+simulation = Simulation(model, Δt=10, stop_time=1day)
 
 progress(sim) = @info "Iter: $(iteration(sim)), " *
                       "time: $(prettytime(sim)), " *
@@ -42,8 +42,8 @@ run!(simulation)
 wmax = maximum(abs, model.velocities.w)
 x, y, z = nodes(model.velocities.w)
 n = Node(1)
-fig = Figure(resolution=(1200, 900))
-title = @lift "Vertical velocity at t = " * prettytime(times[$n])
+fig = Figure(resolution=(800, 600))
+title = @lift "Vertical velocity (m s⁻¹) in free convection at t = " * prettytime(times[$n])
 ax = Axis(fig[1, 1], title=title, xlabel="x (m)", ylabel="z (m)")
 hm = heatmap!(ax, x, z, @lift(slices[$n]),
               colormap=:balance, limits=(-wmax, wmax))
