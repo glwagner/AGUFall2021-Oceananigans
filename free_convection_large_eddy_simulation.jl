@@ -45,7 +45,8 @@ n = Node(1)
 fig = Figure(resolution=(1200, 900))
 title = @lift "Vertical velocity at t = " * prettytime(times[$n])
 ax = Axis(fig[1, 1], title=title, xlabel="x (m)", ylabel="z (m)")
-hm = heatmap!(ax, x, z, @lift(slices[$n]), colormap=:balance, limits=(-wmax, wmax))
+hm = heatmap!(ax, x, z, @lift(slices[$n]),
+              colormap=:balance, limits=(-wmax, wmax))
 Colorbar(fig[1, 2], hm)
 
 record(fig, "free_convection.mp4", 1:length(times), framerate=12) do nn
